@@ -88,6 +88,7 @@ def file_len(fname):
     with open(fname) as f:
         for i, l in enumerate(f):
             pass
+	f.close()
     return i + 1
 
 def create_vars(length):
@@ -104,14 +105,17 @@ def create_domain(domain_set, length):
 			csp_domain.setdefault(key, []).append(domain)
 	return csp_domain
 
-"""def find_neighbor(fileVal, csp_vars, length):
+def find_neighbor(fname):
 	csp_neighbors={}
-	for key in range(1, 15):
-		for var in csp_vars:
-			if  
-			csp_neighbors.setdefault(key, []).append(domain)
+	with open(fname) as f:
+		for row, data in enumerate(f.readlines(),1):
+			for column, val in enumerate(data,1):
+				print(column, val)
+				if(val == '1'):
+					csp_neighbors.setdefault(row, []).append(column)
+			print('--------------------------------')
 	return csp_neighbors
-"""
+
 length = file_len('constr.txt')
 
 
@@ -120,7 +124,7 @@ domain_two = ['a', 'b', 'c','d']
 
 csp_vars = create_vars(length)
 csp_domain = create_domain(domain_one, length)
+csp_neighbors = find_neighbor('constr.txt')
+#read_file('constr.txt')
 
-read_file('constr.txt')
-
-#pprint.pprint(csp_domain)
+pprint.pprint(csp_neighbors)
