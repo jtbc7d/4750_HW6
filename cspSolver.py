@@ -5,7 +5,7 @@ import re
 
 class CSP:
 
-	def _init_(self, var, domain, neighbors):
+	def __init__(self, var, domain, neighbors):
 		self.var = []
 		self.domain = {}
 		self.neighbors = {}
@@ -131,3 +131,5 @@ csp_neighbors = find_neighbor('constr.txt')
 #read_file('constr.txt')
 
 pprint.pprint(csp_neighbors)
+
+csp = CSP(csp_vars, csp_domain, csp_neighbors)
