@@ -1,6 +1,7 @@
 from __future__ import generators
 import types
 import pprint
+import re
 
 class CSP:
 
@@ -109,11 +110,13 @@ def find_neighbor(fname):
 	csp_neighbors={}
 	with open(fname) as f:
 		for row, data in enumerate(f.readlines(),1):
-			for column, val in enumerate(data,1):
+			newData = data.replace('\t','').replace('\n','')
+			for column, val in enumerate(newData, 1):
 				print(column, val)
 				if(val == '1'):
 					csp_neighbors.setdefault(row, []).append(column)
-			print('--------------------------------')
+	
+
 	return csp_neighbors
 
 length = file_len('constr.txt')
