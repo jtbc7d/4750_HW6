@@ -1,15 +1,15 @@
 from __future__ import generators
 import types
 import pprint
-import re
+import random
 
 class CSP:
 
 	def __init__(self, var, domain, neighbors):
-		self.var = []
-		self.domain = {}
-		self.neighbors = {}
-		curr_domains = {}
+		self.var = var
+		self.domain = domain
+		self.neighbors = neighbors
+		self.curr_domains = {}
 
 	def assign(self, var, val, assignment):
 		assignment[var] = val
@@ -18,15 +18,21 @@ class CSP:
 		if var in assignment:
 			if self.curr_domains:
 				self.curr_domains[var] = self.domain[var][:]
+			del assignment[var]
 
-	def constraints(var, val, var2, val2):
+	def constraints(self, var, val, var2, val2):
 		return var == var2 or val == val2
 
 	def nconflicts(self, var, val, assignment):
-		def conflit(var2):
-			val2 = assignment.get(var2)
+		def conflict(var2):
+			val2 = assignment.get(var2, None)
+			print val2
 			return val2 != None and not self.constraints(var, val, var2, val2)
 		return count_if(conflict, self.neighbors[var])
+
+
+	def display(self, assignment):
+		print 'CSP:', self, 'with assignment:', assignment
 
 def argmin_random_tie(seq, fn):
     """Return an element with lowest fn(seq[i]) score; break ties at random.
@@ -42,19 +48,28 @@ def argmin_random_tie(seq, fn):
                     best = x
     return best
 
+def count_if(predicate, seq):
+    """Count the number of elements of seq for which the predicate is true.
+    >>> count_if(callable, [42, None, max, min])
+    2
+    """
+    f = lambda count, x: count + (not not predicate(x))
+    return reduce(f, seq, 0)
+
 def backtracking(CSP):
 	return recur_backtrack({}, CSP)
 
 def recur_backtrack(assignment, csp):
-	if len(assignment) == len(cps.vars):
+	if len(assignment) == len(csp.var):
 		return assignment
 	var = unassigned_variable(assignment, csp)
 	for val in order_domain(var, assignment, csp):
-		csp.nconflicts(var, val, assignment) == 0
-		csp.assign(var, val, assignment)
-		result = recur_backtrack(assignment, csp)
-		if result is not None:
-			return result
+		#print(val)
+		if csp.nconflicts(var, val, assignment) == 0:
+			csp.assign(var, val, assignment)
+			result = recur_backtrack(assignment, csp)
+			if result is not None:
+				return result
 		csp.unassign(var, assignment)
 	return None
 
@@ -65,10 +80,11 @@ def unassigned_variable(assignment, csp):
 def order_domain(var, assignment, csp):
 	if csp.curr_domains:
 		domain = csp.curr_domains[var]
+		#pprint.pprint(domain)
 	else:
 		domain = csp.domain[var][:]
-	while domain:
-		yield domain.pop()
+		pprint.pprint(domain)
+	return domain
 
 def legal_vals(cs, var, assignment):
 	if csp.curr_domains:
@@ -112,9 +128,8 @@ def find_neighbor(fname):
 		for row, data in enumerate(f.readlines(),1):
 			newData = data.replace('\t','').replace('\n','')
 			for column, val in enumerate(newData, 1):
-				print(column, val)
 				if(val == '1'):
-					csp_neighbors.setdefault(row, []).append(column)
+					csp_neighbors.setdefault(int(row), []).append(column)
 	
 
 	return csp_neighbors
@@ -129,7 +144,7 @@ csp_vars = create_vars(length)
 csp_domain = create_domain(domain_one, length)
 csp_neighbors = find_neighbor('constr.txt')
 #read_file('constr.txt')
-
-pprint.pprint(csp_neighbors)
-
+result = {}
 csp = CSP(csp_vars, csp_domain, csp_neighbors)
+result = backtracking(csp)
+#pprint.pprint(result)
