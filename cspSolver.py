@@ -14,7 +14,7 @@ class CSP:
 	def assign(self, var, val, assignment):
 		assignment[var] = val
 
-	def unsassign(self, var, assignment):
+	def unassign(self, var, assignment):
 		if var in assignment:
 			if self.curr_domains:
 				self.curr_domains[var] = self.domain[var][:]
@@ -23,12 +23,23 @@ class CSP:
 	def constraints(self, var, val, var2, val2):
 		return var == var2 or val == val2
 
-	def nconflicts(self, var, val, assignment):
+	"""def nconflicts(self, var, val, assignment):
 		def conflict(var2):
 			val2 = assignment.get(var2, None)
-			print val2
+			#print val2
 			return val2 != None and not self.constraints(var, val, var2, val2)
-		return count_if(conflict, self.neighbors[var])
+		return count_if(conflict, self.neighbors[var])"""
+
+	def nconflicts(self, var, val, assignment):
+		count = 0 
+		for x in self.neighbors[var]:
+			#print("This is the var %d" %var)
+			if assignment.has_key(x):
+				if val == assignment.get(x):
+					count +=1
+		#print(count)
+		return count
+			
 
 
 	def display(self, assignment):
@@ -62,6 +73,7 @@ def backtracking(CSP):
 def recur_backtrack(assignment, csp):
 	if len(assignment) == len(csp.var):
 		return assignment
+
 	var = unassigned_variable(assignment, csp)
 	for val in order_domain(var, assignment, csp):
 		#print(val)
@@ -71,11 +83,34 @@ def recur_backtrack(assignment, csp):
 			if result is not None:
 				return result
 		csp.unassign(var, assignment)
-	return None
+	return assignment
 
 def unassigned_variable(assignment, csp):
-	unassigned = [v for v in csp.var if v not in assignment]
-	return argmin_random_tie(unassigned, lambda var: -legal_vals(csp, var, assignment))
+	"Select the variable to work on next.  Find"
+	unassigned = [v for v in csp.var if v not in assignment] 
+	return argmin_random_tie(unassigned,
+                     lambda var: -legal_vals(csp, var, assignment))
+    
+
+	"""def unassigned_variable(assignment, csp):
+	mrv_val = 100
+	
+	for v in csp.var:
+		if v not in assignment:
+			if csp.curr_domains:
+				if(len(csp.domain[v] < mrv_val)):
+					mrv_val = len(csp.curr_domains[v])
+					returnVal = v
+
+				if(len(csp.domain[v] == mrv_val)):
+					v = nconflicts(v, assignment.get(n), assignment)
+					returnVal = nconflicts(v, assignment.get(n), assignment)
+					if(returnVal < v):
+						returnVal = v
+			else:
+				returnVal = v
+
+	return returnVal"""
 
 def order_domain(var, assignment, csp):
 	if csp.curr_domains:
@@ -83,7 +118,7 @@ def order_domain(var, assignment, csp):
 		#pprint.pprint(domain)
 	else:
 		domain = csp.domain[var][:]
-		pprint.pprint(domain)
+		#pprint.pprint(domain)
 	return domain
 
 def legal_vals(cs, var, assignment):
@@ -141,10 +176,10 @@ domain_one = ['a', 'b', 'c']
 domain_two = ['a', 'b', 'c','d']
 
 csp_vars = create_vars(length)
-csp_domain = create_domain(domain_one, length)
+csp_domain = create_domain(domain_two, length)
 csp_neighbors = find_neighbor('constr.txt')
 #read_file('constr.txt')
 result = {}
 csp = CSP(csp_vars, csp_domain, csp_neighbors)
 result = backtracking(csp)
-#pprint.pprint(result)
+pprint.pprint(result)
