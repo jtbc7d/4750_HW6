@@ -20,16 +20,6 @@ class CSP:
 				self.curr_domains[var] = self.domain[var][:]
 			del assignment[var]
 
-	def constraints(self, var, val, var2, val2):
-		return var == var2 or val == val2
-
-	"""def nconflicts(self, var, val, assignment):
-		def conflict(var2):
-			val2 = assignment.get(var2, None)
-			#print val2
-			return val2 != None and not self.constraints(var, val, var2, val2)
-		return count_if(conflict, self.neighbors[var])"""
-
 	def nconflicts(self, var, val, assignment):
 		count = 0 
 		for x in self.neighbors[var]:
@@ -45,18 +35,16 @@ class CSP:
 	def display(self, assignment):
 		print 'CSP:', self, 'with assignment:', assignment
 
-def argmin_random_tie(seq, fn):
-    """Return an element with lowest fn(seq[i]) score; break ties at random.
-    Thus, for all s,f: argmin_random_tie(s, f) in argmin_list(s, f)"""
-    best_score = fn(seq[0]); n = 0
+def argmin(seq, fn):
+    """Return an element with lowest fn(seq[i]) score; tie goes to first one.
+    >>> argmin(['one', 'to', 'three'], len)
+    'to'
+    """
+    best = seq[0]; best_score = fn(best)
     for x in seq:
         x_score = fn(x)
         if x_score < best_score:
-            best, best_score = x, x_score; n = 1
-        elif x_score == best_score:
-            n += 1
-            if random.randrange(n) == 0:
-                    best = x
+            best, best_score = x, x_score
     return best
 
 def count_if(predicate, seq):
@@ -67,16 +55,21 @@ def count_if(predicate, seq):
     f = lambda count, x: count + (not not predicate(x))
     return reduce(f, seq, 0)
 
-def backtracking(CSP):
-	return recur_backtrack({}, CSP)
+def backtracking(csp):
+	csp.curr_domains, csp.pruned = {}, {}
+	for v in csp.var:
+		csp.curr_domains[v] = csp.domain[v][:]
+        csp.pruned[v] = []
+	csp = csp
+	return recur_backtrack({}, csp)
 
 def recur_backtrack(assignment, csp):
 	if len(assignment) == len(csp.var):
 		return assignment
 
 	var = unassigned_variable(assignment, csp)
+
 	for val in order_domain(var, assignment, csp):
-		#print(val)
 		if csp.nconflicts(var, val, assignment) == 0:
 			csp.assign(var, val, assignment)
 			result = recur_backtrack(assignment, csp)
@@ -87,8 +80,9 @@ def recur_backtrack(assignment, csp):
 
 def unassigned_variable(assignment, csp):
 	"Select the variable to work on next.  Find"
-	unassigned = [v for v in csp.var if v not in assignment] 
-	return argmin_random_tie(unassigned,
+	unassigned = [v for v in csp.var if v not in assignment]
+	pprint.pprint(unassigned)
+	return argmin(unassigned,
                      lambda var: -legal_vals(csp, var, assignment))
     
 
@@ -176,7 +170,7 @@ domain_one = ['a', 'b', 'c']
 domain_two = ['a', 'b', 'c','d']
 
 csp_vars = create_vars(length)
-csp_domain = create_domain(domain_two, length)
+csp_domain = create_domain(domain_one, length)
 csp_neighbors = find_neighbor('constr.txt')
 #read_file('constr.txt')
 result = {}
