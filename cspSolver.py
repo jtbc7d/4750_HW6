@@ -3,6 +3,7 @@ import types
 import pprint
 import random
 
+# Class that handles all 
 class CSP:
 
 	def __init__(self, var, domain, neighbors):
@@ -10,19 +11,22 @@ class CSP:
 		self.domain = domain
 		self.neighbors = neighbors
 		self.curr_domains = {}
-
+	
+	# Assign a single value in the domain to a variable.
 	def assign(self, var, val, assignment):
 		assignment[var] = val
 		if self.curr_domains:
 			print("test")
 			self.forward_check(var, val, assignment)
 
+	# remove a previously assigned variable from the assignment list.
 	def unassign(self, var, assignment):
 		if var in assignment:
 			if self.curr_domains:
 				self.curr_domains[var] = self.domain[var][:]
 			del assignment[var]
-
+	
+	# Determine the number of conflicts a variable has with it's neighbors.
 	def nconflicts(self, var, val, assignment):
 		count = 0 
 		for x in self.neighbors[var]:
@@ -30,6 +34,7 @@ class CSP:
 				if val == assignment.get(x):
 					count +=1
 
+	# Implements the application of the forward checking hueristic.
 	def forward_check(self, var, val, assignment):
 		if self.curr_domains:
             # Restore prunings from previous value of var
@@ -56,7 +61,7 @@ def count_if(predicate, seq):
     f = lambda count, x: count + (not not predicate(x))
     return reduce(f, seq, 0)
 
-
+# Find the best move for the algorithm to make.
 def argmin(seq, fn):
 	best = seq[0]; best_score = fn(best)
 	for x in seq:
@@ -65,7 +70,7 @@ def argmin(seq, fn):
         	best, best_score = x, x_score
 	return best
 
-
+# searching algorithm to find the best values in the domains for each variable given the constraints of the csp.
 def backtracking(csp):
 	csp.curr_domains, csp.pruned = {}, {}
 	for v in csp.var:
@@ -73,6 +78,7 @@ def backtracking(csp):
         csp.pruned[v] = []
 	return recur_backtrack({}, csp)
 
+# Handles the main bluk of the backtracking search algorithm.
 def recur_backtrack(assignment, csp):
 	if len(assignment) == len(csp.var):
 		return assignment
@@ -90,7 +96,7 @@ def recur_backtrack(assignment, csp):
 	return assignment
 
 
-
+# Handles the assignment of unassigned variables and application of the MRV and degree hueristics.
 def unassigned_variable(assignment, csp):
 	mrv_val = 100
 	smallest_domain = 0
@@ -116,6 +122,7 @@ def unassigned_variable(assignment, csp):
 	print("---------------------")
 	return returnVal
 
+# Display the order the values in the domains will appear (Alphabetically).
 def order_domain(var, assignment, csp):
 	if csp.curr_domains:
 		domain = csp.curr_domains[var]
@@ -125,6 +132,7 @@ def order_domain(var, assignment, csp):
 		#pprint.pprint(domain)
 	return domain
 
+# Find the values in a domain that a variable can choose considering the number of conflicts it has with it's neighbors and the values of those neighbors.
 def legal_vals(csp, var, assignment):
 	if csp.curr_domains:
 		return len(csp.curr_domains[var])
@@ -132,12 +140,14 @@ def legal_vals(csp, var, assignment):
 		return count_if(lambda val: csp.nconflicts(var, val, assignment) == 0, 
 			csp.domain[var])
 
+# Function to handle the degree hueristic.
 def degree_h(csp, var):
 	count = 0
 	for l in csp.neighbors[var]:
 		count +=1
 	return count
 
+# Function to implement the MRV hueristic.
 def mrv_h(csp, var, assignment):
 	mrv_size = len(csp.curr_domains[var])
 	for x in csp.neighbors[var]:
@@ -147,7 +157,7 @@ def mrv_h(csp, var, assignment):
 					mrv_size -= 1
 	return mrv_size
 
-
+# Read in the values from the adjancency matrix from the text file.
 def read_file(fname):
 	constrData=[]
 	constrFile = open(fname, 'r')
@@ -156,6 +166,7 @@ def read_file(fname):
 		print i
 	return constrData
 
+# Find the total length of the text file.
 def file_len(fname):
     with open(fname) as f:
         for i, l in enumerate(f):
@@ -163,13 +174,14 @@ def file_len(fname):
 	f.close()
     return i + 1
 
+# Initilize the variables and return a list containing all of them.
 def create_vars(length):
  	var_list = []
  	for i in range(1, length+1):
  		var_list.append(i)
  	return var_list
 
-
+# Initilize the inital domains for the variables in the problem.
 def create_domain(domain_set, length):
 	csp_domain={}
 	for key in range(1,length+1): 
@@ -177,6 +189,7 @@ def create_domain(domain_set, length):
 			csp_domain.setdefault(key, []).append(domain)
 	return csp_domain
 
+# Run through the adjacency matrix and create an array containing each variable and the varibles neighbor.
 def find_neighbor(fname):
 	csp_neighbors={}
 	with open(fname) as f:
@@ -200,6 +213,8 @@ csp_domain = create_domain(domain_two, length)
 csp_neighbors = find_neighbor('constr.txt')
 #read_file('constr.txt')
 result = {}
+# initilze the variables and domains, and establish the neighbors of each variable.
 csp = CSP(csp_vars, csp_domain, csp_neighbors)
+# Begin running the search algorithms.
 result = backtracking(csp)
 pprint.pprint(result)
