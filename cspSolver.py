@@ -3,7 +3,7 @@ import types
 import pprint
 import random
 
-# Class that handles all 
+# Class that handles all functions that directly interact with the csp.
 class CSP:
 
 	def __init__(self, var, domain, neighbors):
@@ -52,7 +52,7 @@ class CSP:
 	def constraints(A, a, B, b):
 		return A == a or B == b
 
-
+# Find the number of elements that appear in the provided sequence that allows the provided predicate to be true.
 def count_if(predicate, seq):
     """Count the number of elements of seq for which the predicate is true.
     >>> count_if(callable, [42, None, max, min])
