@@ -13,6 +13,9 @@ class CSP:
 
 	def assign(self, var, val, assignment):
 		assignment[var] = val
+		if self.curr_domains:
+			print("test")
+			self.forward_check(var, val, assignment)
 
 	def unassign(self, var, assignment):
 		if var in assignment:
@@ -27,27 +30,23 @@ class CSP:
 				if val == assignment.get(x):
 					count +=1
 
-		return count
+	def forward_check(self, var, val, assignment):
+		if self.curr_domains:
+            # Restore prunings from previous value of var
+			for (B, b) in self.pruned[var]:
+				self.curr_domains[B].append(b)
+			self.pruned[var] = []
+	            # Prune any other B=b assignement that conflict with var=val
+			for B in self.neighbors[var]:
+				if B not in assignment:
+					for b in self.curr_domains[B][:]:
+						if not self.constraints(var, val, B, b):
+							self.curr_domains[B].remove(b)
+							self.pruned[var].append((B, b))
 
-'''	def nconflicts(self, var, val, assignment):
-        # Subclasses may implement this more efficiently
-		def conflict(var2):
-            val2 = assignment.get(var2, None)
-            return val2 != None and not self.constraints(var, val, var2, val2)
-    return count_if(conflict, self.neighbors[var])'''
+	def constraints(A, a, B, b):
+		return A == a or B == b
 
-
-def argmin(seq, fn):
-    """Return an element with lowest fn(seq[i]) score; tie goes to first one.
-    >>> argmin(['one', 'to', 'three'], len)
-    'to'
-    """
-    best = seq[0]; best_score = fn(best)
-    for x in seq:
-        x_score = fn(x)
-        if x_score < best_score:
-            best, best_score = x, x_score
-    return best
 
 def count_if(predicate, seq):
     """Count the number of elements of seq for which the predicate is true.
@@ -57,12 +56,21 @@ def count_if(predicate, seq):
     f = lambda count, x: count + (not not predicate(x))
     return reduce(f, seq, 0)
 
+
+def argmin(seq, fn):
+	best = seq[0]; best_score = fn(best)
+	for x in seq:
+		x_score = fn(x)
+    	if x_score < best_score:
+        	best, best_score = x, x_score
+	return best
+
+
 def backtracking(csp):
 	csp.curr_domains, csp.pruned = {}, {}
 	for v in csp.var:
 		csp.curr_domains[v] = csp.domain[v][:]
         csp.pruned[v] = []
-	csp = csp
 	return recur_backtrack({}, csp)
 
 def recur_backtrack(assignment, csp):
@@ -80,30 +88,8 @@ def recur_backtrack(assignment, csp):
 				return result
 		csp.unassign(var, assignment)
 	return assignment
-	
-
-def forward_check(self, var, val, assignment):
-        "Do forward checking (current domain reduction) for this assignment."
-        if self.curr_domains:
-            # Restore prunings from previous value of var
-            for (B, b) in self.pruned[var]:
-                self.curr_domains[B].append(b)
-            self.pruned[var] = []
-            # Prune any other B=b assignement that conflict with var=val
-            for B in self.neighbors[var]:
-                if B not in assignment:
-                    for b in self.curr_domains[B][:]:
-                        if not self.constraints(var, val, B, b):
-                            self.curr_domains[B].remove(b)
-                            self.pruned[var].append((B, b))
 
 
-'''def unassigned_variable(assignment, csp):
-	"Select the variable to work on next.  Find"
-	unassigned = [v for v in csp.var if v not in assignment]
-	return argmin(unassigned,
-                     lambda var: -legal_vals(csp, var, assignment))'''
-    
 
 def unassigned_variable(assignment, csp):
 	mrv_val = 100
