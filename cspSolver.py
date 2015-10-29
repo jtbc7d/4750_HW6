@@ -23,17 +23,19 @@ class CSP:
 	def nconflicts(self, var, val, assignment):
 		count = 0 
 		for x in self.neighbors[var]:
-			#print("This is the var %d" %var)
 			if assignment.has_key(x):
 				if val == assignment.get(x):
 					count +=1
-		#print(count)
+
 		return count
-			
 
+'''	def nconflicts(self, var, val, assignment):
+        # Subclasses may implement this more efficiently
+		def conflict(var2):
+            val2 = assignment.get(var2, None)
+            return val2 != None and not self.constraints(var, val, var2, val2)
+    return count_if(conflict, self.neighbors[var])'''
 
-	def display(self, assignment):
-		print 'CSP:', self, 'with assignment:', assignment
 
 def argmin(seq, fn):
     """Return an element with lowest fn(seq[i]) score; tie goes to first one.
@@ -68,6 +70,7 @@ def recur_backtrack(assignment, csp):
 		return assignment
 
 	var = unassigned_variable(assignment, csp)
+	print("%d was selected" %var)
 
 	for val in order_domain(var, assignment, csp):
 		if csp.nconflicts(var, val, assignment) == 0:
@@ -77,34 +80,55 @@ def recur_backtrack(assignment, csp):
 				return result
 		csp.unassign(var, assignment)
 	return assignment
+	
 
-def unassigned_variable(assignment, csp):
+def forward_check(self, var, val, assignment):
+        "Do forward checking (current domain reduction) for this assignment."
+        if self.curr_domains:
+            # Restore prunings from previous value of var
+            for (B, b) in self.pruned[var]:
+                self.curr_domains[B].append(b)
+            self.pruned[var] = []
+            # Prune any other B=b assignement that conflict with var=val
+            for B in self.neighbors[var]:
+                if B not in assignment:
+                    for b in self.curr_domains[B][:]:
+                        if not self.constraints(var, val, B, b):
+                            self.curr_domains[B].remove(b)
+                            self.pruned[var].append((B, b))
+
+
+'''def unassigned_variable(assignment, csp):
 	"Select the variable to work on next.  Find"
 	unassigned = [v for v in csp.var if v not in assignment]
-	pprint.pprint(unassigned)
 	return argmin(unassigned,
-                     lambda var: -legal_vals(csp, var, assignment))
+                     lambda var: -legal_vals(csp, var, assignment))'''
     
 
-	"""def unassigned_variable(assignment, csp):
+def unassigned_variable(assignment, csp):
 	mrv_val = 100
-	
+	smallest_domain = 0
+
 	for v in csp.var:
+
 		if v not in assignment:
-			if csp.curr_domains:
-				if(len(csp.domain[v] < mrv_val)):
-					mrv_val = len(csp.curr_domains[v])
-					returnVal = v
 
-				if(len(csp.domain[v] == mrv_val)):
-					v = nconflicts(v, assignment.get(n), assignment)
-					returnVal = nconflicts(v, assignment.get(n), assignment)
-					if(returnVal < v):
-						returnVal = v
-			else:
+			v_size = mrv_h(csp, v, assignment)
+			print(v, v_size)
+			if(v_size < mrv_val):
+				mrv_val = v_size
 				returnVal = v
+			
 
-	return returnVal"""
+			if(v_size == mrv_val):
+				degree_new = degree_h(csp, v)
+				print(v, degree_new)
+				
+				if(degree_new < smallest_domain):
+					smallest_domain = degree_new
+					returnVal = v
+	print("---------------------")
+	return returnVal
 
 def order_domain(var, assignment, csp):
 	if csp.curr_domains:
@@ -115,12 +139,28 @@ def order_domain(var, assignment, csp):
 		#pprint.pprint(domain)
 	return domain
 
-def legal_vals(cs, var, assignment):
+def legal_vals(csp, var, assignment):
 	if csp.curr_domains:
 		return len(csp.curr_domains[var])
 	else:
 		return count_if(lambda val: csp.nconflicts(var, val, assignment) == 0, 
 			csp.domain[var])
+
+def degree_h(csp, var):
+	count = 0
+	for l in csp.neighbors[var]:
+		count +=1
+	return count
+
+def mrv_h(csp, var, assignment):
+	mrv_size = len(csp.curr_domains[var])
+	for x in csp.neighbors[var]:
+		if assignment.has_key(x):
+			for varVal in csp.curr_domains[var]:
+				if varVal == assignment.get(x):
+					mrv_size -= 1
+	return mrv_size
+
 
 def read_file(fname):
 	constrData=[]
@@ -170,7 +210,7 @@ domain_one = ['a', 'b', 'c']
 domain_two = ['a', 'b', 'c','d']
 
 csp_vars = create_vars(length)
-csp_domain = create_domain(domain_one, length)
+csp_domain = create_domain(domain_two, length)
 csp_neighbors = find_neighbor('constr.txt')
 #read_file('constr.txt')
 result = {}
